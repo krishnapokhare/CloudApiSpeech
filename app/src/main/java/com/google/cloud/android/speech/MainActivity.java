@@ -32,11 +32,14 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -51,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 1;
 
     private SpeechService mSpeechService;
-
+    private StringBuilder speechTextBuilder;
     private VoiceRecorder mVoiceRecorder;
     private final VoiceRecorder.Callback mVoiceCallback = new VoiceRecorder.Callback() {
 
@@ -85,18 +88,20 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
     private int mColorNotHearing;
 
     // View references
-    private TextView mStatus;
-    private TextView mText;
-    private ResultAdapter mAdapter;
-    private RecyclerView mRecyclerView;
+//    private TextView mStatus;
+//    private TextView mText;
+//    private ResultAdapter mAdapter;
+//    private TextView resultsTextView;
+//    private RecyclerView mRecyclerView;
+    private ImageView fab;
+    private TextView speechTextView;
 
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder binder) {
             mSpeechService = SpeechService.from(binder);
-            mSpeechService.addListener(mSpeechServiceListener);
-            mStatus.setVisibility(View.VISIBLE);
+//            mStatus.setVisibility(View.VISIBLE);
         }
 
         @Override
@@ -105,27 +110,62 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
         }
 
     };
+    private boolean isRecording;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
+        setContentView(R.layout.activity_main_new);
+        fab = findViewById(R.id.fab);
+        speechTextView = findViewById(R.id.speechTextView);
+//        speechTextView.setMovementMethod(new ScrollingMovementMethod());
         final Resources resources = getResources();
         final Resources.Theme theme = getTheme();
         mColorHearing = ResourcesCompat.getColor(resources, R.color.status_hearing, theme);
         mColorNotHearing = ResourcesCompat.getColor(resources, R.color.status_not_hearing, theme);
-
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onRecordButtonClick();
+            }
+        });
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-        mStatus = (TextView) findViewById(R.id.status);
-        mText = (TextView) findViewById(R.id.text);
+//        mStatus = (TextView) findViewById(R.id.status);
+//        mText = (TextView) findViewById(R.id.text);
+//        resultsTextView=findViewById(R.id.resultsTextView);
+//        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+//        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+//        final ArrayList<String> results = savedInstanceState == null ? null :
+//                savedInstanceState.getStringArrayList(STATE_RESULTS);
+//        mAdapter = new ResultAdapter(results);
+//        mRecyclerView.setAdapter(mAdapter);
+        isRecording = false;
+    }
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        final ArrayList<String> results = savedInstanceState == null ? null :
-                savedInstanceState.getStringArrayList(STATE_RESULTS);
-        mAdapter = new ResultAdapter(results);
-        mRecyclerView.setAdapter(mAdapter);
+    protected void onRecordButtonClick() {
+        if (!isRecording) {
+            // Start listening to voices
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                    == PackageManager.PERMISSION_GRANTED) {
+                isRecording = true;
+                fab.setImageResource(R.drawable.ic_stop_black_24dp);
+                startVoiceRecorder();
+                speechTextBuilder = new StringBuilder();
+                speechTextView.setText(null);
+
+            } else if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.RECORD_AUDIO)) {
+                showPermissionMessageDialog();
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
+                        REQUEST_RECORD_AUDIO_PERMISSION);
+            }
+
+        } else {
+            fab.setImageResource(R.drawable.ic_mic_black_24dp);
+            stopVoiceRecorder();
+            isRecording = false;
+        }
     }
 
     @Override
@@ -136,16 +176,16 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
         bindService(new Intent(this, SpeechService.class), mServiceConnection, BIND_AUTO_CREATE);
 
         // Start listening to voices
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                == PackageManager.PERMISSION_GRANTED) {
-            startVoiceRecorder();
-        } else if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                Manifest.permission.RECORD_AUDIO)) {
-            showPermissionMessageDialog();
-        } else {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
-                    REQUEST_RECORD_AUDIO_PERMISSION);
-        }
+//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+//                == PackageManager.PERMISSION_GRANTED) {
+//            startVoiceRecorder();
+//        } else if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+//                Manifest.permission.RECORD_AUDIO)) {
+//            showPermissionMessageDialog();
+//        } else {
+//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
+//                    REQUEST_RECORD_AUDIO_PERMISSION);
+//        }
     }
 
     @Override
@@ -154,28 +194,33 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
         stopVoiceRecorder();
 
         // Stop Cloud Speech API
-        mSpeechService.removeListener(mSpeechServiceListener);
-        unbindService(mServiceConnection);
-        mSpeechService = null;
-
+        if (mSpeechService != null) {
+            mSpeechService.removeAllListeners();
+            unbindService(mServiceConnection);
+            mSpeechService = null;
+        }
         super.onStop();
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        if (mAdapter != null) {
-            outState.putStringArrayList(STATE_RESULTS, mAdapter.getResults());
-        }
+//        if (mAdapter != null) {
+//            outState.putStringArrayList(STATE_RESULTS, mAdapter.getResults());
+//        }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-            @NonNull int[] grantResults) {
+                                           @NonNull int[] grantResults) {
         if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
             if (permissions.length == 1 && grantResults.length == 1
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                isRecording = true;
+                fab.setImageResource(R.drawable.ic_stop_black_24dp);
                 startVoiceRecorder();
+                speechTextBuilder = new StringBuilder();
+                speechTextView.setText(null);
             } else {
                 showPermissionMessageDialog();
             }
@@ -202,6 +247,9 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
     }
 
     private void startVoiceRecorder() {
+        if(!mSpeechService.hasListeners()) {
+            mSpeechService.addListener(mSpeechServiceListener);
+        }
         if (mVoiceRecorder != null) {
             mVoiceRecorder.stop();
         }
@@ -210,6 +258,7 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
     }
 
     private void stopVoiceRecorder() {
+        mSpeechService.removeAllListeners();
         if (mVoiceRecorder != null) {
             mVoiceRecorder.stop();
             mVoiceRecorder = null;
@@ -226,7 +275,7 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mStatus.setTextColor(hearingVoice ? mColorHearing : mColorNotHearing);
+//                mStatus.setTextColor(hearingVoice ? mColorHearing : mColorNotHearing);
             }
         });
     }
@@ -244,16 +293,30 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
                     if (isFinal) {
                         mVoiceRecorder.dismiss();
                     }
-                    if (mText != null && !TextUtils.isEmpty(text)) {
+                    Log.i("MainActivity", text);
+//                    if (mText != null && !TextUtils.isEmpty(text)) {
+                    if (!TextUtils.isEmpty(text)) {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+//                                if (isFinal) {
+//                                    mText.setText(null);
+////                                    resultsTextView.setText(resultsTextView.getText()+"\n"+text);
+//                                    mAdapter.addResult(text);
+//                                    mRecyclerView.smoothScrollToPosition(0);
+//                                } else {
+//                                    mText.setText(text);
+//                                }
                                 if (isFinal) {
-                                    mText.setText(null);
-                                    mAdapter.addResult(text);
-                                    mRecyclerView.smoothScrollToPosition(0);
+                                    if (speechTextBuilder.toString() != "")
+                                        speechTextBuilder.append("\n");
+                                    speechTextBuilder.append(text);
+                                    speechTextView.setText(speechTextBuilder.toString());
                                 } else {
-                                    mText.setText(text);
+                                    if (speechTextBuilder.toString() == "")
+                                        speechTextView.setText(text);
+                                    else
+                                        speechTextView.setText(speechTextBuilder.toString() + "\n" + text);
                                 }
                             }
                         });

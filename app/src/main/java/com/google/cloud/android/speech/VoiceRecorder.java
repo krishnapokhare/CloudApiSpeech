@@ -38,8 +38,8 @@ public class VoiceRecorder {
     private static final int ENCODING = AudioFormat.ENCODING_PCM_16BIT;
 
     private static final int AMPLITUDE_THRESHOLD = 1500;
-    private static final int SPEECH_TIMEOUT_MILLIS = 2000;
-    private static final int MAX_SPEECH_LENGTH_MILLIS = 30 * 1000;
+    private static final int SPEECH_TIMEOUT_MILLIS = 15000;
+    private static final int MAX_SPEECH_LENGTH_MILLIS = 60 * 1000;
 
     public static abstract class Callback {
 
@@ -75,10 +75,14 @@ public class VoiceRecorder {
 
     private final Object mLock = new Object();
 
-    /** The timestamp of the last time that voice is heard. */
+    /**
+     * The timestamp of the last time that voice is heard.
+     */
     private long mLastVoiceHeardMillis = Long.MAX_VALUE;
 
-    /** The timestamp when the current voice is started. */
+    /**
+     * The timestamp when the current voice is started.
+     */
     private long mVoiceStartedMillis;
 
     public VoiceRecorder(@NonNull Callback callback) {
@@ -158,8 +162,18 @@ public class VoiceRecorder {
             if (sizeInBytes == AudioRecord.ERROR_BAD_VALUE) {
                 continue;
             }
-            final AudioRecord audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
-                    sampleRate, CHANNEL, ENCODING, sizeInBytes);
+            final AudioRecord audioRecord = new AudioRecord.Builder()
+                    .setAudioSource(MediaRecorder.AudioSource.MIC)
+                    .setBufferSizeInBytes(sizeInBytes)
+                    .setAudioFormat(new AudioFormat.Builder()
+                            .setSampleRate(sampleRate)
+                            .setEncoding(ENCODING)
+                            .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                            .build())
+                    .build();
+
+//            final AudioRecord audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
+//                    sampleRate, CHANNEL, ENCODING, sizeInBytes);
             if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED) {
                 mBuffer = new byte[sizeInBytes];
                 return audioRecord;

@@ -19,4 +19,6 @@
     <string name="permission_message">This app needs to record audio and recognize your speech.</string>
     <string name="listening">Listening…</string>
     <string name="load_file">Load file</string>
+    <string name="no_errors">No Errrors</string>
+    <string name="english_us">English(US)</string>
 </resources>

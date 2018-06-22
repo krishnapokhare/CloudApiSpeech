@@ -229,12 +229,20 @@ public class SpeechService extends Service {
         return mBinder;
     }
 
+    public boolean hasListeners(){
+        return !mListeners.isEmpty();
+    }
+
     public void addListener(@NonNull Listener listener) {
         mListeners.add(listener);
     }
 
     public void removeListener(@NonNull Listener listener) {
         mListeners.remove(listener);
+    }
+
+    public void removeAllListeners(){
+        mListeners.clear();
     }
 
     /**

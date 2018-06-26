@@ -1,0 +1,44 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference
+        android:defaultValue="@string/word_count_interval_default"
+        android:inputType="number"
+        android:key="word_count_interval"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="No of seconds to count the Average speed."
+        android:title="Word Count Interval" />
+
+    <EditTextPreference
+        android:defaultValue="@string/minimum_words_vibration"
+        android:inputType="number"
+        android:key="minimum_words_vibration"
+        android:numeric="integer"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="Once the average exceeds this number, device will vibrate."
+        android:title="Minimum Number of Words before vibration" />
+
+    <EditTextPreference
+        android:defaultValue="@string/keyword"
+        android:inputType="text"
+        android:key="keyword"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="This word will be used to count the number of instances"
+        android:title="Keyword" />
+
+    <ListPreference
+        android:defaultValue="en-US"
+        android:entries="@array/languages"
+        android:entryValues="@array/languages_values"
+        android:key="languages"
+        android:summary="This language will be used while recording voice."
+        android:title="Supported Languages while Listening" />
+
+    <ListPreference
+        android:defaultValue="en_US"
+        android:key="speakinglanguages"
+        android:summary="This language will be used while speaking the recorded vocie."
+        android:title="Supported Languages while Speaking" />
+
+</PreferenceScreen>

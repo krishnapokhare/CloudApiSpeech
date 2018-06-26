@@ -1,21 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
     android:background="#455A64">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/my_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/primary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+        app:title="@string/app_name"
+        app:titleTextColor="@color/primary_text" />
 
     <TextView
         android:id="@+id/speechTextView"
         android:layout_width="match_parent"
         android:layout_height="200dp"
+        android:layout_below="@+id/my_toolbar"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:background="@android:color/white"
-        android:scrollbars="vertical"
-        android:scrollbarAlwaysDrawVerticalTrack="true"
-        android:textColor="@android:color/black"
         android:maxLines="10"
+        android:scrollbarAlwaysDrawVerticalTrack="true"
+        android:scrollbars="vertical"
+        android:textColor="@android:color/black"
         android:textIsSelectable="true"
         android:textSize="@dimen/text_size" />
 
@@ -65,22 +80,35 @@
         android:textColor="@android:color/white" />
 
     <ImageView
-        android:id="@+id/fab"
-        android:layout_width="wrap_content"
+        android:id="@+id/startRecordingButton"
+        android:layout_width="match_parent"
         android:layout_height="68dp"
-        android:layout_below="@+id/recordingLanguageHeading"
-        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/avgWordCountHeadingTextView"
+        android:layout_alignParentEnd="true"
         android:layout_marginStart="8dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="16dp"
         android:src="@drawable/ic_mic_black_24dp" />
+
+    <ImageView
+        android:id="@+id/stopRecordingButton"
+        android:layout_width="match_parent"
+        android:layout_height="68dp"
+        android:layout_above="@+id/avgWordCountHeadingTextView"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_stop_black_24dp"
+        android:visibility="invisible" />
 
     <TextView
         android:id="@+id/avgWordCountHeadingTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/avgWordCountTextView"
+        android:layout_above="@+id/wordStatisticsLayout"
         android:layout_marginStart="8dp"
         android:layout_marginBottom="8dp"
         android:text="Average Word Count"
@@ -90,7 +118,7 @@
         android:id="@+id/keywordHeadingTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/keywordTextView"
+        android:layout_above="@+id/wordStatisticsLayout"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:layout_toLeftOf="@+id/keywordValueTextView"
@@ -101,34 +129,41 @@
         android:id="@+id/keywordValueTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/keywordTextView"
+        android:layout_above="@+id/wordStatisticsLayout"
         android:layout_alignParentEnd="true"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:text="Sample Keyword"
         android:textColor="@android:color/white" />
 
-    <TextView
-        android:id="@+id/avgWordCountTextView"
-        android:layout_width="0dp"
-        android:layout_height="50dp"
-        android:layout_above="@+id/errorTextView"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="16dp"
-        android:background="@android:color/white"
-        android:textColor="@android:color/black" />
+    <LinearLayout
+        android:id="@+id/wordStatisticsLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/errorTextView">
 
-    <TextView
-        android:id="@+id/keywordTextView"
-        android:layout_width="0dp"
-        android:layout_height="50dp"
-        android:layout_above="@+id/errorTextView"
-        android:layout_alignParentEnd="true"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="16dp"
-        android:background="@android:color/white"
-        android:textColor="@android:color/black" />
+        <TextView
+            android:id="@+id/avgWordCountTextView"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginBottom="16dp"
+            android:layout_weight="1"
+            android:background="@android:color/white"
+            android:textColor="@android:color/black" />
+
+        <TextView
+            android:id="@+id/keywordTextView"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="16dp"
+            android:layout_weight="1"
+            android:background="@android:color/white"
+            android:textColor="@android:color/black" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/errorTextView"

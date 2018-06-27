@@ -23,17 +23,17 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.media.AudioManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -48,6 +48,7 @@ import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -66,8 +67,12 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
 
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 1;
     private static final String LOG_TAG_DEBUG = "MainActivity";
-    private static final int WordCountInterval = 5;
-    private static final int minimum_words_vibration = 10;
+    private static int WordCountInterval = 5;
+    private static int minimum_words_vibration = 10;
+    String[] languages;
+    String[] languageValues;
+    private String recordingLangCode;
+    private String recordingLangName;
 
     private SpeechService mSpeechService;
     private StringBuilder speechTextBuilder;
@@ -102,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
     // Resource caches
     private int mColorHearing;
     private int mColorNotHearing;
-    private static int WordCountIntervalIncrementor = 5;
+    private int WordCountIntervalIncrementor = 5;
     private TextView speechTextView;
     // View references
 //    private TextView mStatus;
@@ -194,11 +199,14 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
         keywordValueTextView = findViewById(R.id.keywordValueTextView);
         errorTextView = findViewById(R.id.errorTextView);
         keywordTextView = findViewById(R.id.keywordTextView);
+
+        languages = getResources().getStringArray(R.array.languages);
+        languageValues = getResources().getStringArray(R.array.languages_values);
 //        speechTextView.setMovementMethod(new ScrollingMovementMethod());
-        final Resources resources = getResources();
-        final Resources.Theme theme = getTheme();
-        mColorHearing = ResourcesCompat.getColor(resources, R.color.status_hearing, theme);
-        mColorNotHearing = ResourcesCompat.getColor(resources, R.color.status_not_hearing, theme);
+//        final Resources resources = getResources();
+//        final Resources.Theme theme = getTheme();
+//        mColorHearing = ResourcesCompat.getColor(resources, R.color.status_hearing, theme);
+//        mColorNotHearing = ResourcesCompat.getColor(resources, R.color.status_not_hearing, theme);
         setSupportActionBar((Toolbar) findViewById(R.id.my_toolbar));
 //        mStatus = (TextView) findViewById(R.id.status);
 //        mText = (TextView) findViewById(R.id.text);
@@ -313,7 +321,25 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
     @Override
     protected void onResume() {
         super.onResume();
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        recordingLangCode = preferences.getString("languages", "en-US");
+        recordingLangName = getRecordingLangName(recordingLangCode);
+        recordingLangHeadingTextView.setText(recordingLangName);
+        String speakingLanguage = preferences.getString("speakinglanguages", "en-US");
+        String speakingLanguageName = Locale.forLanguageTag(speakingLanguage).getDisplayName();
+        speakingLangHeadingTextView.setText(speakingLanguageName);
+        keyword = preferences.getString("keyword", "Not set");
+        keywordValueTextView.setText(keyword);
+        WordCountInterval = Integer.parseInt(preferences.getString("word_count_interval", "5"));
+        minimum_words_vibration = Integer.parseInt(preferences.getString("minimum_words_vibration", getString(R.string.minimum_words_vibration)));
         new PrepareTextToSpeechTask(this).execute();
+    }
+
+    private String getRecordingLangName(String langCode) {
+        Log.d(LOG_TAG_DEBUG, "Method: getRecordingLangName:" + langCode);
+        Log.d(LOG_TAG_DEBUG, languageValues.toString());
+        int langValueIndex = Arrays.asList(languageValues).indexOf(langCode);
+        return languages[langValueIndex];
     }
 
     @Override
@@ -374,6 +400,9 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
             case R.id.action_settings:
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
+            case R.id.action_playAudio:
+                PlayTextToSpeech(speechTextView.getText().toString());
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -384,6 +413,7 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
         isRecording = true;
         startRecordingButton.setVisibility(View.INVISIBLE);
         stopRecordingButton.setVisibility(View.VISIBLE);
+
         if (!mSpeechService.hasListeners()) {
             mSpeechService.addListener(mSpeechServiceListener);
         }
@@ -608,7 +638,11 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
             if (avgWordCount != null) {
                 if (avgWordCount > mActivityRef.get().minimum_words_vibration) {
                     Vibrator v = (Vibrator) mActivityRef.get().getSystemService(Context.VIBRATOR_SERVICE);
-                    Objects.requireNonNull(v, "Vibrator service is returning as null.").vibrate(500);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        Objects.requireNonNull(v, "Vibrator service is returning as null.").vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
+                    } else {
+                        Objects.requireNonNull(v, "Vibrator service is returning as null.").vibrate(500);
+                    }
                 }
                 mActivityRef.get().WordCountIntervalIncrementor = mActivityRef.get().WordCountIntervalIncrementor + mActivityRef.get().WordCountInterval;
                 mActivityRef.get().avgWordCountTextView.setText(Long.toString(avgWordCount) + " words per " + Integer.toString(WordCountInterval) + " seconds.");

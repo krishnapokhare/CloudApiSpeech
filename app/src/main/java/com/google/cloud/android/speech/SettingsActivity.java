@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.ListPreference;
+import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
@@ -22,6 +23,32 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     public static Context getAppContext() {
         return context;
     }
+
+    private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object value) {
+            String stringValue = value.toString();
+
+            if (preference instanceof ListPreference) {
+                // For list preferences, look up the correct display value in
+                // the preference's 'entries' list.
+                ListPreference listPreference = (ListPreference) preference;
+                int index = listPreference.findIndexOfValue(stringValue);
+
+                // Set the summary to reflect the new value.
+                preference.setSummary(
+                        index >= 0
+                                ? listPreference.getEntries()[index]
+                                : null);
+
+            } else {
+                // For all other preferences, set the summary to the value's
+                // simple string representation.
+                preference.setSummary(stringValue);
+            }
+            return true;
+        }
+    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -83,6 +110,18 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         }
     }
 
+    private static void bindPreferenceSummaryToValue(Preference preference) {
+        // Set the listener to watch for value changes.
+        preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
+
+        // Trigger the listener immediately with the preference's
+        // current value.
+        sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
+                PreferenceManager
+                        .getDefaultSharedPreferences(preference.getContext())
+                        .getString(preference.getKey(), ""));
+    }
+
     public static class GeneralPreferenceFragment extends PreferenceFragment {
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -90,6 +129,12 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
             // Load the preferences from an XML resource
             addPreferencesFromResource(R.xml.pref_general);
+
+            bindPreferenceSummaryToValue(findPreference("word_count_interval"));
+            bindPreferenceSummaryToValue(findPreference("minimum_words_vibration"));
+            bindPreferenceSummaryToValue(findPreference("keyword"));
+            bindPreferenceSummaryToValue(findPreference("languages"));
+            bindPreferenceSummaryToValue(findPreference("speakinglanguages"));
 
             ListPreference listPreferenceCategory = (ListPreference) findPreference("speakinglanguages");
             if (listPreferenceCategory != null) {
@@ -112,7 +157,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 String speakingLanguage = preferences.getString("speakinglanguages", "en-US");
                 listPreferenceCategory.setValue(speakingLanguage);
                 String speakingLanguageDisplayName = Locale.forLanguageTag(speakingLanguage).getDisplayName();
-                //listPreferenceCategory.setSummary(speakingLanguageDisplayName);
+                listPreferenceCategory.setSummary(speakingLanguageDisplayName);
             }
         }
     }

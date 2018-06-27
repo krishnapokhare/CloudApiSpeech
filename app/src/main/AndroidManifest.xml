@@ -43,7 +43,7 @@
             android:label="@string/title_activity_settings"
             android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.Speech">
+            android:theme="@style/Theme.Speech.WithActionBar">
 
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data

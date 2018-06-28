@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements MessageDialogFrag
         public void onVoiceStart() {
             showStatus(true);
             if (mSpeechService != null) {
-                mSpeechService.startRecognizing(mVoiceRecorder.getSampleRate());
+                mSpeechService.startRecognizing(mVoiceRecorder.getSampleRate(), recordingLangCode);
             }
         }
 
